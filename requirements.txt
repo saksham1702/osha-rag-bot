@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+python-dotenv
+langchain
+langchain-core
+langchain-qdrant
+langchain-text-splitters
+sentence-transformers
+qdrant-client
+beautifulsoup4
+httpx
+pydantic
+langchain-groq
