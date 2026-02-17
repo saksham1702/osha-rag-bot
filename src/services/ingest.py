@@ -45,8 +45,11 @@ def _check_robots_txt(base_url: str, path: str) -> bool:
     robots.txt is a standard file at a site's root that tells crawlers
     which pages they are allowed or disallowed from accessing.
     """
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    }
     try:
-        resp = httpx.get(f"{base_url}/robots.txt", timeout=10)
+        resp = httpx.get(f"{base_url}/robots.txt", headers=headers, timeout=10)
         if resp.status_code != 200:
             # No robots.txt found, assuming crawling is allowed
             return True
@@ -150,7 +153,13 @@ async def crawl_osha_pages(max_pages: int = MAX_INGEST_PAGES) -> list[dict]:
     to_visit = [start_url]
     pages = []
 
-    async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.5",
+    }
+
+    async with httpx.AsyncClient(timeout=30, follow_redirects=True, headers=headers) as client:
         while to_visit and len(pages) < max_pages:
             url = to_visit.pop(0)
             if url in visited:
