@@ -54,10 +54,10 @@ def _check_robots_txt(base_url: str, path: str) -> bool:
     }
 
     # Configure proxy if enabled
-    proxies = {"http://": PROXY_URL, "https://": PROXY_URL} if PROXY_ENABLED and PROXY_URL else None
+    proxy = PROXY_URL if PROXY_ENABLED and PROXY_URL else None
 
     try:
-        resp = httpx.get(f"{base_url}/robots.txt", headers=headers, proxies=proxies, timeout=10)
+        resp = httpx.get(f"{base_url}/robots.txt", headers=headers, proxy=proxy, timeout=10)
         if resp.status_code != 200:
             # No robots.txt found, assuming crawling is allowed
             return True
@@ -178,12 +178,12 @@ async def crawl_osha_pages(max_pages: int = MAX_INGEST_PAGES) -> list[dict]:
     }
 
     # Configure proxy if enabled
-    proxies = {"http://": PROXY_URL, "https://": PROXY_URL} if PROXY_ENABLED and PROXY_URL else None
+    proxy = PROXY_URL if PROXY_ENABLED and PROXY_URL else None
 
     if PROXY_ENABLED:
         logger.info(f"Using proxy for scraping: {PROXY_URL.split('@')[1] if '@' in PROXY_URL else PROXY_URL}")
 
-    async with httpx.AsyncClient(timeout=30, follow_redirects=True, headers=headers, proxies=proxies) as client:
+    async with httpx.AsyncClient(timeout=30, follow_redirects=True, headers=headers, proxy=proxy) as client:
         while to_visit and len(pages) < max_pages:
             url = to_visit.pop(0)
             if url in visited:
