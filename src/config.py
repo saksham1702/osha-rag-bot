@@ -25,3 +25,7 @@ OSHA_LAWS_REGS_PATH = "/laws-regs"
 
 # -- LLM API --
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+
+# -- Proxy Settings (for scraping) --
+PROXY_ENABLED = os.getenv("PROXY_ENABLED", "false").lower() == "true"
+PROXY_URL = os.getenv("PROXY_URL", "")  # Format: http://username:password@proxy-server:port
