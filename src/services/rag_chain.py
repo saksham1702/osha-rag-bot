@@ -55,7 +55,7 @@ def _format_docs_with_citations(docs) -> str:
     return "\n\n---\n\n".join(formatted_parts)
 
 
-def _format_history(history: list[dict]) -> str:
+def _format_history(history: list) -> str:
     """Format conversation history for the prompt."""
     if not history:
         return ""
@@ -66,8 +66,13 @@ def _format_history(history: list[dict]) -> str:
     recent_history = history[-5:] if len(history) > 5 else history
 
     for msg in recent_history:
-        role = msg.get("role", "user")
-        content = msg.get("content", "")
+        # Handle both Pydantic objects and dicts
+        if hasattr(msg, 'role'):
+            role = msg.role
+            content = msg.content
+        else:
+            role = msg.get("role", "user")
+            content = msg.get("content", "")
 
         if role == "user":
             formatted_lines.append(f"User: {content}")
