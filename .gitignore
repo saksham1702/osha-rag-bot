@@ -29,3 +29,10 @@ Thumbs.db
 # Documentation (keep only README.md)
 *.md
 !README.md
+
+# WordPress Plugin (deploy separately)
+osha-chat-widget/
+osha-chat-widget*.zip
+
+# Temporary scripts
+continue_ssl_setup.sh

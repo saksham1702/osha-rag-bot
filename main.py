@@ -38,6 +38,7 @@ app.add_middleware(
     allow_origins=[
         "https://staging.knowella.com",
         "https://knowella.com",
+        "https://apirg.knowella.com",
         "http://localhost:3000",  # For local testing
     ],
     allow_credentials=True,

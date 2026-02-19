@@ -1,10 +1,12 @@
 """
 RAG chain for OSHA regulatory queries using Groq Llama 3.3 70B.
 Retrieves relevant documents and generates answers with citations.
+Supports conversation history for contextual responses.
 """
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_qdrant import QdrantVectorStore
+from typing import Optional
 
 from src.config import COLLECTION_NAME
 from src.db.qdrant_client import get_qdrant_client
@@ -21,6 +23,9 @@ RULES:
 - Format citations as [Source: URL] at the end of each relevant statement
 - Be precise and factual, do not speculate beyond the provided context
 - If multiple sources are relevant, cite all of them
+- Use conversation history to understand follow-up questions and maintain context
+
+{history_section}
 
 CONTEXT:
 {context}
@@ -48,6 +53,29 @@ def _format_docs_with_citations(docs) -> str:
         formatted_parts.append(f"{header}\n{doc.page_content}")
 
     return "\n\n---\n\n".join(formatted_parts)
+
+
+def _format_history(history: list[dict]) -> str:
+    """Format conversation history for the prompt."""
+    if not history:
+        return ""
+
+    formatted_lines = ["CONVERSATION HISTORY (for context):"]
+
+    # Only include last 5 messages to avoid token limits
+    recent_history = history[-5:] if len(history) > 5 else history
+
+    for msg in recent_history:
+        role = msg.get("role", "user")
+        content = msg.get("content", "")
+
+        if role == "user":
+            formatted_lines.append(f"User: {content}")
+        elif role == "assistant":
+            formatted_lines.append(f"Assistant: {content}")
+
+    formatted_lines.append("")
+    return "\n".join(formatted_lines)
 
 
 def _extract_citations(docs) -> list[dict]:
@@ -78,10 +106,15 @@ def get_retriever(k: int = 5):
     return vector_store.as_retriever(search_kwargs={"k": k})
 
 
-async def query_rag_chain(question: str) -> dict:
+async def query_rag_chain(question: str, history: Optional[list[dict]] = None) -> dict:
     """
     Running RAG pipeline: retrieve -> format context -> generate answer.
     Returns the answer and citation list.
+
+    Args:
+        question: The user's current question
+        history: List of previous messages (max last 5 used)
+                 Format: [{"role": "user", "content": "..."}, {"role": "assistant", "content": "..."}]
     """
     retriever = get_retriever()
     llm = get_groq_llm()
@@ -96,11 +129,16 @@ async def query_rag_chain(question: str) -> dict:
         }
 
     context = _format_docs_with_citations(docs)
+
+    # Format conversation history if provided
+    history_section = _format_history(history or [])
+
     chain = prompt | llm | StrOutputParser()
 
     answer = await chain.ainvoke({
         "context": context,
         "question": question,
+        "history_section": history_section,
     })
 
     citations = _extract_citations(docs)
