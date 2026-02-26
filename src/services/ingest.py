@@ -19,6 +19,7 @@ from src.config import (
     MAX_INGEST_PAGES,
     OSHA_BASE_URL,
     OSHA_LAWS_REGS_PATH,
+    OSHA_PUBLICATIONS_PATH,
     PROXY_ENABLED,
     PROXY_URL,
 )
@@ -159,12 +160,18 @@ async def crawl_osha_pages(max_pages: int = MAX_INGEST_PAGES) -> list[dict]:
     Returning a list of dicts with 'url', 'html', and 'metadata' keys.
     """
     if not _check_robots_txt(OSHA_BASE_URL, OSHA_LAWS_REGS_PATH):
-        logger.error("Crawling disallowed by robots.txt")
+        logger.error("Crawling disallowed by robots.txt for laws-regs")
         return []
 
-    start_url = f"{OSHA_BASE_URL}{OSHA_LAWS_REGS_PATH}"
+    if not _check_robots_txt(OSHA_BASE_URL, OSHA_PUBLICATIONS_PATH):
+        logger.error("Crawling disallowed by robots.txt for publications")
+        return []
+
     visited = set()
-    to_visit = [start_url]
+    to_visit = [
+        f"{OSHA_BASE_URL}{OSHA_LAWS_REGS_PATH}",
+        f"{OSHA_BASE_URL}{OSHA_PUBLICATIONS_PATH}",
+    ]
     pages = []
 
     headers = {
@@ -222,18 +229,18 @@ async def crawl_osha_pages(max_pages: int = MAX_INGEST_PAGES) -> list[dict]:
                 })
                 logger.info(f"Crawled: {url} ({len(clean_text)} chars)")
 
-                # Discovering internal links under /laws-regs/
+                # Discovering internal links under /laws-regs/ and /publications/
                 for a_tag in soup.find_all("a", href=True):
                     href = a_tag["href"]
                     full_url = urljoin(url, href)
                     parsed = urlparse(full_url)
 
                     is_osha = "osha.gov" in parsed.netloc
-                    is_laws_regs = parsed.path.startswith("/laws-regs")
+                    is_relevant = parsed.path.startswith("/laws-regs") or parsed.path.startswith("/publications")
                     not_visited = full_url not in visited
                     no_fragment = not parsed.fragment
 
-                    if is_osha and is_laws_regs and not_visited and no_fragment:
+                    if is_osha and is_relevant and not_visited and no_fragment:
                         to_visit.append(full_url)
 
             except Exception as e:

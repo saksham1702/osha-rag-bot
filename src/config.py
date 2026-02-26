@@ -22,6 +22,7 @@ MAX_INGEST_PAGES = int(os.getenv("MAX_INGEST_PAGES", "500"))
 # -- OSHA Crawling --
 OSHA_BASE_URL = "https://www.osha.gov"
 OSHA_LAWS_REGS_PATH = "/laws-regs"
+OSHA_PUBLICATIONS_PATH = "/publications"
 
 # -- LLM API --
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
