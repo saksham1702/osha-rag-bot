@@ -36,3 +36,7 @@ osha-chat-widget*.zip
 
 # Temporary scripts
 continue_ssl_setup.sh
+
+# Logs and local files
+server.log
+btn.svg
